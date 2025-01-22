@@ -21,6 +21,7 @@ class TodoappApplicationTests {
 	fun contextLoads() {
 	}
 
+
 	@Test
 	fun 最初のテスト() {
 		assertThat(1+2, equalTo(3))
