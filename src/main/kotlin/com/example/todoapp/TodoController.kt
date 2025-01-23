@@ -7,11 +7,8 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import software.amazon.awssdk.services.dynamodb.model.PutItemRequest
 import software.amazon.awssdk.services.dynamodb.model.ScanRequest
-import java.awt.SystemColor.text
 import java.net.URI
 import java.util.*
-import java.util.HashMap
-import java.util.Map
 
 class TodoRequest {
     var  text: String = ""

@@ -23,10 +23,10 @@ import software.amazon.awssdk.services.dynamodb.model.PutItemRequest
 import java.net.URI
 import java.util.*
 
-class Todo {
-	var id: String = ""
-	var text: String = ""
-}
+//class Todo {
+//	var id: String = ""
+//	var text: String = ""
+//}
 
 @SpringBootTest
 @AutoConfigureMockMvc
