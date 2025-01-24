@@ -35,14 +35,6 @@ private val client = DynamoDbClient.builder()
     .region(Region.AP_NORTHEAST_1)
     .build()
 
-fun scanAllItems(tableName: String): List<Map<String, AttributeValue>>{
-    val request = ScanRequest.builder()
-        .tableName("test")
-        .build()
-    val response = client.scan(request)
-    val items = response.items().toList()
-    return items
-}
     //⭐️GET METHOD------------------------
 
     @GetMapping("/todo")
@@ -59,7 +51,6 @@ fun scanAllItems(tableName: String): List<Map<String, AttributeValue>>{
             .build()
         val response = client.scan(request)
         val items = response.items().toList()
-        println("items--------$items")
         val resultItems = mutableListOf<TodoItem>()
         items.forEach { item ->
             val resultPK = item["PK"]?.s() ?: ""
@@ -98,9 +89,10 @@ fun scanAllItems(tableName: String): List<Map<String, AttributeValue>>{
     @PostMapping("/todo")
     fun addNewItem(@RequestBody todo: TodoRequest): String {
         //追加したいアイテム
+        val newPK = UUID.randomUUID().toString()
         val item = mapOf(
             //ランダムなUUIDをPKに入れる、この場合は.toString()が必要
-            "PK" to AttributeValue.fromS(UUID.randomUUID().toString()),
+            "PK" to AttributeValue.fromS(newPK),
             "text" to AttributeValue.fromS(todo.text)
         )
         //アイテムを追加するリクエスト
@@ -109,14 +101,16 @@ fun scanAllItems(tableName: String): List<Map<String, AttributeValue>>{
             .item(item)
             .build()
         client.putItem(putItemRequest)
+        return newPK
         //追加された状態のテーブルデータを取得
-        val scanItemRequest = ScanRequest.builder()
-            .tableName("test")
-            .build()
-        val response = client.scan(scanItemRequest)
-        val items = response.items().toList()
-        val PK = items[items.size - 1]["PK"]?.s() ?: ""
-        return PK
+        //!!!この返り値PKはUUIDのため、新しく保存されたものが下に追加されるとは限らず正しく返せない
+//        val scanItemRequest = ScanRequest.builder()
+//            .tableName("test")
+//            .build()
+//        val response = client.scan(scanItemRequest)
+//        val items = response.items().toList()
+//        val PK = items[items.size - 1]["PK"]?.s() ?: ""
+//        return PK
     }
 
     //⭐️PUT METHOD-------------------------

@@ -2,6 +2,7 @@ package com.example.todoapp
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.hamcrest.CoreMatchers.equalTo
+import org.hamcrest.CoreMatchers.not
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -9,9 +10,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider
 import software.amazon.awssdk.regions.Region
@@ -63,10 +62,11 @@ class TodoappApplicationTests {
 		return items
 	}
 
+
 	//⭐️GET METHOD------------------------
 
 	@Test
-	fun `todoエンドポイントに GET をリクエストして全てのテーブル情報を返す`(){
+	fun `全てのテーブルデータを GET する`(){
 		//Setup
 		deleteAllItems("test")
 
@@ -87,9 +87,10 @@ class TodoappApplicationTests {
 	}
 
 	@Test
-	fun `特定の PK のデータのみを取得する`(){
+	fun `特定のPKのデータのみを GET する`(){
 		//Setup
 		deleteAllItems("test")
+
 		//Action
 		val PK1 = mockMvc.perform(post("/todo").content("{\"text\":\"１番目\"}")
 			.contentType(MediaType.APPLICATION_JSON)
@@ -97,11 +98,17 @@ class TodoappApplicationTests {
 		val PK2 = mockMvc.perform(post("/todo").content("{\"text\":\"２番目\"}")
 			.contentType(MediaType.APPLICATION_JSON)
 		).andReturn().response.contentAsString
-		//Check
+//		val mapper = ObjectMapper()
+//		val PK1: String = mapper.readTree(response1).get("PK").asText()
+//		val PK2: String = mapper.readTree(response2).get("PK").asText()
 
+		//Check
 		mockMvc.perform(get("/todo/$PK1"))
 			.andExpect(status().isOk)
 			.andExpect(jsonPath("$.text").value("１番目"))
+		mockMvc.perform(get("/todo/$PK2"))
+			.andExpect(status().isOk)
+			.andExpect(jsonPath("$.text").value("２番目"))
 
 	}
 
@@ -112,6 +119,7 @@ class TodoappApplicationTests {
 		mockMvc.perform(get("/todo/1234567890"))
 		.andExpect(status().isNotFound)
 	}
+
 
 	//⭐️POST METHOD-----------------------
 
@@ -163,7 +171,7 @@ class TodoappApplicationTests {
 	}
 
 	@Test
-	fun `二つPOSTしたときに それぞれ違うIDで登録させれている`(){
+	fun `二つPOSTしたときに それぞれ違うIDで登録されている`(){
 		//Setup
 		deleteAllItems("test")
 
@@ -180,7 +188,7 @@ class TodoappApplicationTests {
 	}
 
 	@Test
-	fun `POSTしたときに 登録したID を返す`() {
+	fun `新しいtodoアイテムを POST したときに 登録したID を返す`() {
 		//Setup
 		deleteAllItems("test")
 
@@ -200,12 +208,30 @@ class TodoappApplicationTests {
 	}
 
 
-
 	//⭐️PUT METHOD------------------------
 
+	@Test
+	fun `特定のPKのデータを UPDATE する`() {
+//		setup
+		deleteAllItems("test")
+		val id1 = mockMvc.perform(
+			post("/todo")
+				.content("{\"text\": \"１番目\"}")
+				.contentType(MediaType.APPLICATION_JSON)
+		).andReturn().response.contentAsString
+		val mapper = ObjectMapper()
+		val beforeText = mapper.readTree(id1).get("text").asText()
+		println("beforeText----------$beforeText")
+		//		action
+		mockMvc.perform(put("/todo/$id1", id1))
+//		check
+		val afterText = mapper.readTree(id1).get("text").asText()
+		println("afterText----------$afterText")
 
+		assertThat(beforeText, not(equalTo(afterText)))
+	}
 
-	//⭐️DELETE METHOD---------------------
+		//⭐️DELETE METHOD---------------------
 
 	@Test
 	fun `特定のPKのデータを DELETE する`(){
@@ -223,9 +249,6 @@ class TodoappApplicationTests {
 //		action
 		mockMvc.perform(delete("/todo/$id1", id1))
 //		check
-		val allTodoItems = mockMvc.perform(get("/todo"))
-			.andReturn().response.contentAsString
-		println("all----------$allTodoItems")
 		mockMvc.perform(get("/todo/$id1"))
 			.andExpect(status().isNotFound)
 		mockMvc.perform(get("/todo/$id2"))
