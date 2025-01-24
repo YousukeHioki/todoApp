@@ -45,6 +45,8 @@ class TodoItem {
 @RestController
 class TodoController {
 
+    //⭐️GET METHOD------------------------
+
 //    @GetMapping("/todo/{id}")
 //    fun getTodoById(@PathVariable id: String): Boolean {
 //        //!!!kotlinでは対象のデータをitで表す
@@ -59,6 +61,46 @@ class TodoController {
 //
 //        return todoItem.isFinished
 //    }
+
+
+    @GetMapping("/todo")
+    fun getAllItems(): List<TodoItem> {
+        val client = DynamoDbClient.builder()
+            .endpointOverride(URI.create("http://localhost:4566")) //テスト時などに特定のEPを指定する
+//          →参考---https://docs.aws.amazon.com/ja_jp/sdk-for-java/latest/developer-guide/region-selection.html
+            .credentialsProvider(AnonymousCredentialsProvider.create()) // 匿名認証のため必要
+//          →参考---https://docs.aws.amazon.com/ja_jp/sdk-for-java/latest/developer-guide/client-creation-defaults.html
+            .region(Region.AP_NORTHEAST_1) //利用位置から近い地域を設定
+            .build()
+        val request = ScanRequest.builder()
+            .tableName("test")
+            .build()
+        val response = client.scan(request)
+        val items = response.items().toList()
+        val resultItems = mutableListOf<TodoItem>()
+        items.forEach { item ->
+            val resultPK = item["PK"]?.s() ?: ""
+            val resultText = item["text"]?.s() ?: ""
+            //TodoItemを初期化し新しいTodoItemを作成
+            val resultItem = TodoItem()
+            resultItem.PK = resultPK
+            resultItem.text = resultText
+            resultItems.add(resultItem)
+        }
+
+//        この書き方の時はdata classにする必要がある
+//        val todoItems = items.map{
+//            TodoItem(
+//                PK = it["PK"]?.s() ?: "",
+//                text = it["text"]?.s() ?: ""
+//            )
+//        }
+
+        println("resultItems-------$resultItems")
+        return resultItems
+    }
+
+    //⭐️POST METHOD------------------------
 
     @PostMapping("/todo")
     fun addNewItem(@RequestBody todo: TodoRequest) {
@@ -87,35 +129,6 @@ class TodoController {
         val response = client.scan(scanItemRequest)
         val items = response.items().toList()
         println(items)
-
     }
 
-    @GetMapping("/todo")
-    fun getAllItems(): List<TodoItem> {
-        val client = DynamoDbClient.builder()
-            .endpointOverride(URI.create("http://localhost:4566")) //テスト時などに特定のEPを指定する
-//          →参考---https://docs.aws.amazon.com/ja_jp/sdk-for-java/latest/developer-guide/region-selection.html
-            .credentialsProvider(AnonymousCredentialsProvider.create()) // 匿名認証のため必要
-//          →参考---https://docs.aws.amazon.com/ja_jp/sdk-for-java/latest/developer-guide/client-creation-defaults.html
-            .region(Region.AP_NORTHEAST_1) //利用位置から近い地域を設定
-            .build()
-        val request = ScanRequest.builder()
-            .tableName("test")
-            .build()
-        val response = client.scan(request)
-        val items = response.items().toList()
-        val resultItems = mutableListOf<TodoItem>()
-        items.forEach { item ->
-            val resultPK = item["PK"]?.s() ?: ""
-            val resultText = item["text"]?.s() ?: ""
-            //TodoItemを初期化し新しいTodoItemを作成
-            val resultItem = TodoItem().apply {
-                PK = resultPK
-                text = resultText
-        }
-            resultItems.add(resultItem)
-        }
-        println("resultItems-------$resultItems")
-        return resultItems
-    }
 }

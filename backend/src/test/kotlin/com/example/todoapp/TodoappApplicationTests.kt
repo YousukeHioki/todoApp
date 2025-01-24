@@ -65,18 +65,43 @@ class TodoappApplicationTests {
 		return items
 	}
 
-	@Autowired
-	private lateinit var mockMvc: MockMvc
-
-//	@Test
-//	fun contextLoads() {
-//	}
-
+	//⭐️GET METHOD------------------------
 
 	@Test
-	fun testForTest() {
-		assertThat(1+2, equalTo(3))
+	fun `todoエンドポイントに GET をリクエストして全てのテーブル情報を返す`(){
+		//Setup
+		deleteAllItems("test")
+
+		val item = mapOf(
+			"PK" to AttributeValue.fromS(UUID.randomUUID().toString()),
+			"text" to AttributeValue.fromS("12345")
+		)
+		val putItemRequest = PutItemRequest.builder()
+			.tableName("test")
+			.item(item)
+			.build()
+		client.putItem(putItemRequest)
+
+		mockMvc.perform(get("/todo"))
+			.andExpect(status().isOk)
+			.andExpect(jsonPath("$.length()").value(1))
+			.andExpect(jsonPath("$[0].text").value("12345"))
 	}
+
+//	@Test
+//	fun `id のパスパラメータを渡すと id にあてはまるアイテムの完了状態が返る`() {
+//		val result = mockMvc.perform(get("/todo/{id}", "12345"))
+//			.andExpect(status().isOk)
+//			//データの特定の値を確認する
+//			//.andExpect(content().string("false"))
+//			//Booleanで値を取得する方法↓
+////			.andExpect(jsonPath("$.isFinished").value(false))
+//			.andReturn()
+//			result.response.contentAsString
+//			println("response-------${result.response.contentAsString}")
+//	}
+
+	//⭐️POST METHOD-----------------------
 
 	@Test
 	fun `エンドポイントtodoにPOSTすると 200 OK が返る`(){
@@ -141,38 +166,16 @@ class TodoappApplicationTests {
 		val allItems = scanAllItems("test")
 		assertThat(allItems.size, equalTo(2))
 	}
+	@Autowired
+	private lateinit var mockMvc: MockMvc
 
-	@Test
-	fun `todoエンドポイントに GET をリクエストして全てのテーブル情報を返す`(){
-		//Setup
-		deleteAllItems("test")
+	//⭐️PUT METHOD------------------------
 
-		val item = mapOf(
-			"PK" to AttributeValue.fromS(UUID.randomUUID().toString()),
-			"text" to AttributeValue.fromS("12345")
-		)
-		val putItemRequest = PutItemRequest.builder()
-			.tableName("test")
-			.item(item)
-			.build()
-		client.putItem(putItemRequest)
 
-		mockMvc.perform(get("/todo"))
-			.andExpect(status().isOk)
-			.andExpect(jsonPath("$.length()").value(1))
-			.andExpect(jsonPath("$[0].text").value("12345"))
-	}
 
-//	@Test
-//	fun `id のパスパラメータを渡すと id にあてはまるアイテムの完了状態が返る`() {
-//		val result = mockMvc.perform(get("/todo/{id}", "12345"))
-//			.andExpect(status().isOk)
-//			//データの特定の値を確認する
-//			//.andExpect(content().string("false"))
-//			//Booleanで値を取得する方法↓
-////			.andExpect(jsonPath("$.isFinished").value(false))
-//			.andReturn()
-//			result.response.contentAsString
-//			println("response-------${result.response.contentAsString}")
-//	}
+	//⭐️DELETE METHOD---------------------
+
+
+
+
 }
