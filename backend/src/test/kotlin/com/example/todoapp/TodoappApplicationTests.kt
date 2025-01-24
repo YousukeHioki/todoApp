@@ -1,6 +1,7 @@
 package com.example.todoapp
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.jayway.jsonpath.JsonPath
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.CoreMatchers.not
 import org.hamcrest.MatcherAssert.assertThat
@@ -214,19 +215,26 @@ class TodoappApplicationTests {
 	fun `特定のPKのデータを UPDATE する`() {
 //		setup
 		deleteAllItems("test")
-		val id1 = mockMvc.perform(
+		val postedItemPK = mockMvc.perform(
 			post("/todo")
-				.content("{\"text\": \"１番目\"}")
+				.content("{\"text\": \"beforeです\"}")
 				.contentType(MediaType.APPLICATION_JSON)
 		).andReturn().response.contentAsString
-		val mapper = ObjectMapper()
-		val beforeText = mapper.readTree(id1).get("text").asText()
-		println("beforeText----------$beforeText")
+		val beforeItem = mockMvc.perform(get("/todo/$postedItemPK")
+			.contentType(MediaType.APPLICATION_JSON)
+		).andReturn().response.contentAsString
+		val beforeText: String = JsonPath.read(beforeItem, "$.text")
+
 		//		action
-		mockMvc.perform(put("/todo/$id1", id1))
+		mockMvc.perform(put("/todo/$postedItemPK")
+			.contentType(MediaType.APPLICATION_JSON)
+			.content("{\"text\": \"afterです\"}"))
+
 //		check
-		val afterText = mapper.readTree(id1).get("text").asText()
-		println("afterText----------$afterText")
+		val afterItem = mockMvc.perform(get("/todo/$postedItemPK")
+			.contentType(MediaType.APPLICATION_JSON)
+		).andReturn().response.contentAsString
+		val afterText: String = JsonPath.read(afterItem, "$.text")
 
 		assertThat(beforeText, not(equalTo(afterText)))
 	}

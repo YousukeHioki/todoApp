@@ -1,15 +1,13 @@
 package com.example.todoapp
 
+import org.springframework.context.support.beans
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
-import software.amazon.awssdk.services.dynamodb.model.AttributeValue
-import software.amazon.awssdk.services.dynamodb.model.PutItemRequest
-import software.amazon.awssdk.services.dynamodb.model.DeleteItemRequest
-import software.amazon.awssdk.services.dynamodb.model.ScanRequest
+import software.amazon.awssdk.services.dynamodb.model.*
 import java.net.URI
 import java.util.*
 
@@ -30,22 +28,18 @@ class TodoItem {
 class TodoController {
 
 private val client = DynamoDbClient.builder()
-    .endpointOverride(URI.create("http://localhost:4566"))
-    .credentialsProvider(AnonymousCredentialsProvider.create())
-    .region(Region.AP_NORTHEAST_1)
+    .endpointOverride(URI.create("http://localhost:4566")) //テスト時などに特定のEPを指定する
+//          →参考---https://docs.aws.amazon.com/ja_jp/sdk-for-java/latest/developer-guide/region-selection.html
+    .credentialsProvider(AnonymousCredentialsProvider.create()) // 匿名認証のため必要
+//          →参考---https://docs.aws.amazon.com/ja_jp/sdk-for-java/latest/developer-guide/client-creation-defaults.html
+    .region(Region.AP_NORTHEAST_1) //利用位置から近い地域を設定
     .build()
 
     //⭐️GET METHOD------------------------
 
     @GetMapping("/todo")
     fun getAllItems(): List<TodoItem> {
-        val client = DynamoDbClient.builder()
-            .endpointOverride(URI.create("http://localhost:4566")) //テスト時などに特定のEPを指定する
-//          →参考---https://docs.aws.amazon.com/ja_jp/sdk-for-java/latest/developer-guide/region-selection.html
-            .credentialsProvider(AnonymousCredentialsProvider.create()) // 匿名認証のため必要
-//          →参考---https://docs.aws.amazon.com/ja_jp/sdk-for-java/latest/developer-guide/client-creation-defaults.html
-            .region(Region.AP_NORTHEAST_1) //利用位置から近い地域を設定
-            .build()
+
         val request = ScanRequest.builder()
             .tableName("test")
             .build()
@@ -115,6 +109,33 @@ private val client = DynamoDbClient.builder()
 
     //⭐️PUT METHOD-------------------------
 
+    @PutMapping("/todo/{PK}")
+    fun updateItem(@PathVariable PK: String, @RequestBody todo: TodoRequest): ResponseEntity<String>{
+        val beforeItem = getTodoItemByPK(PK)
+        val beforeText = beforeItem.body?.text
+        println("beforeText=--------------$beforeText")
+        //更新実行
+        val updateItemRequest = UpdateItemRequest.builder()
+            .tableName("test")
+            .key(mapOf("PK" to AttributeValue.builder().s(PK).build()))
+            .attributeUpdates(mapOf(
+                "text" to AttributeValueUpdate.builder()
+                    .value(AttributeValue.builder().s(todo.text).build())
+                    .action(AttributeAction.PUT)
+                    .build()
+            ))
+            .build()
+        client.updateItem(updateItemRequest)
+        //確認
+        val afterItem = getTodoItemByPK(PK)
+        val afterText = afterItem.body?.text
+        println("afterText=--------------$afterText")
+        if(beforeText != afterText){
+            return ResponseEntity("Update completed", HttpStatus.OK)
+        } else {
+            return ResponseEntity("Could not update.", HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
 
 
     //⭐️DELETE METHOD----------------------
