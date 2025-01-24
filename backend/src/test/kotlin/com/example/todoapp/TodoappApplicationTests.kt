@@ -1,6 +1,5 @@
 package com.example.todoapp
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.jayway.jsonpath.JsonPath
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.CoreMatchers.not
