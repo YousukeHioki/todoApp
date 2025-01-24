@@ -1,11 +1,14 @@
 package com.example.todoapp
 
+import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import software.amazon.awssdk.services.dynamodb.model.PutItemRequest
+import software.amazon.awssdk.services.dynamodb.model.DeleteItemRequest
 import software.amazon.awssdk.services.dynamodb.model.ScanRequest
 import java.net.URI
 import java.util.*
@@ -14,6 +17,7 @@ class TodoRequest {
     var  text: String = ""
 }
 class TodoItem {
+    //ここでjacksonなんとかすると小文字でpkが返るのを防げるが一旦置き
     var PK: String = ""
     var text: String = ""
     //printした時にデータをちゃんと表示させるためだけの処理
@@ -22,46 +26,24 @@ class TodoItem {
     }
 }
 
-
-//data class Todo (
-//    var id: String,
-//    var todo: String,
-//    var isFinished: Boolean
-//)
-//
-//val todoRepository = listOf(
-//    Todo(
-//        id = "12345",
-//        todo = "studyAboutSQL",
-//        isFinished = false
-//    ),
-//    Todo(
-//        id = "67890",
-//        todo = "studyAboutDB",
-//        isFinished = true
-//    )
-//)
-
 @RestController
 class TodoController {
 
+private val client = DynamoDbClient.builder()
+    .endpointOverride(URI.create("http://localhost:4566"))
+    .credentialsProvider(AnonymousCredentialsProvider.create())
+    .region(Region.AP_NORTHEAST_1)
+    .build()
+
+fun scanAllItems(tableName: String): List<Map<String, AttributeValue>>{
+    val request = ScanRequest.builder()
+        .tableName("test")
+        .build()
+    val response = client.scan(request)
+    val items = response.items().toList()
+    return items
+}
     //⭐️GET METHOD------------------------
-
-//    @GetMapping("/todo/{id}")
-//    fun getTodoById(@PathVariable id: String): Boolean {
-//        //!!!kotlinでは対象のデータをitで表す
-//        //!!!kotlinでは===は参照の等価性を、==はオブジェクトの内容の等価性をチェックする
-//        val todoItem = todoRepository.find { it.id == id }
-//        //printlnで改行して次を表示、printのみでは横並びで繋がって表示され見にくくなる
-//        print("todoRepositoryを表示-------")
-//        println(todoRepository)
-//        println("todoItemを表示-------")
-//        println(todoItem)
-//        println("todoItem.isFinishedを表示-------${todoItem!!.isFinished}")
-//
-//        return todoItem.isFinished
-//    }
-
 
     @GetMapping("/todo")
     fun getAllItems(): List<TodoItem> {
@@ -77,6 +59,7 @@ class TodoController {
             .build()
         val response = client.scan(request)
         val items = response.items().toList()
+        println("items--------$items")
         val resultItems = mutableListOf<TodoItem>()
         items.forEach { item ->
             val resultPK = item["PK"]?.s() ?: ""
@@ -87,7 +70,20 @@ class TodoController {
             resultItem.text = resultText
             resultItems.add(resultItem)
         }
+            return resultItems
+        }
 
+    @GetMapping("/todo/{PK}")
+    //ResponseEntityで
+    fun getTodoItemByPK(@PathVariable PK: String): ResponseEntity<TodoItem>{
+        val allTodoItems = getAllItems()
+        val todoItem = allTodoItems.find{it.PK == PK}
+        if(todoItem != null){
+            return ResponseEntity(todoItem, HttpStatus.OK)
+        } else {
+            return ResponseEntity(null, HttpStatus.NOT_FOUND)
+        }
+    }
 //        この書き方の時はdata classにする必要がある
 //        val todoItems = items.map{
 //            TodoItem(
@@ -96,26 +92,17 @@ class TodoController {
 //            )
 //        }
 
-        println("resultItems-------$resultItems")
-        return resultItems
-    }
 
     //⭐️POST METHOD------------------------
 
     @PostMapping("/todo")
-    fun addNewItem(@RequestBody todo: TodoRequest) {
+    fun addNewItem(@RequestBody todo: TodoRequest): String {
         //追加したいアイテム
         val item = mapOf(
             //ランダムなUUIDをPKに入れる、この場合は.toString()が必要
             "PK" to AttributeValue.fromS(UUID.randomUUID().toString()),
             "text" to AttributeValue.fromS(todo.text)
         )
-        //DBと接続
-        val client = DynamoDbClient.builder()
-            .endpointOverride(URI.create("http://localhost:4566"))
-            .credentialsProvider(AnonymousCredentialsProvider.create())
-            .region(Region.AP_NORTHEAST_1)
-            .build()
         //アイテムを追加するリクエスト
         val putItemRequest = PutItemRequest.builder()
             .tableName("test")
@@ -128,7 +115,33 @@ class TodoController {
             .build()
         val response = client.scan(scanItemRequest)
         val items = response.items().toList()
-        println(items)
+        val PK = items[items.size - 1]["PK"]?.s() ?: ""
+        return PK
     }
+
+    //⭐️PUT METHOD-------------------------
+
+
+
+    //⭐️DELETE METHOD----------------------
+
+    @DeleteMapping("/todo/{PK}")
+    fun deleteItem(@PathVariable PK: String): String{
+        //削除実行
+        val deleteItemRequest = DeleteItemRequest.builder()
+            .tableName("test")
+            .key(mapOf("PK" to AttributeValue.builder().s(PK).build()))
+            .build()
+        client.deleteItem(deleteItemRequest)
+        //確認
+        val result = getTodoItemByPK(PK)
+        println("deletedItem=$result")
+        if(result.statusCode == HttpStatus.NOT_FOUND){
+            return HttpStatus.OK.toString()
+        } else {
+            return HttpStatus.NOT_FOUND.toString()
+        }
+    }
+
 
 }
