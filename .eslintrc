@@ -1,0 +1,15 @@
+{
+  "env": {
+    "node": true,//Node.js環境のコードである場合の設定
+    "browser": true,//ブラウザ環境のコードである場合の設定
+    "es2021": true //ECMAScriptの仕様を有効化
+  },
+  "extends": [
+    "eslint:recommended",//品質ルール等の推奨設定を拡張
+    "plugin:prettier/recommended" //eslintとprettierの競合を避ける
+  ],
+  "plugins": ["prettier"],//prettierでのコードチェックを行う
+  "rules": {
+    "prettier/prettier": "error"//prettierのルールに則ったコード出ない場合にエラーを出す
+  }
+}

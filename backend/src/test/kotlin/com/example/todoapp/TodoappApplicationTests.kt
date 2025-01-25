@@ -213,7 +213,7 @@ class TodoappApplicationTests {
 	@Test
 	fun `特定のPKのデータを UPDATE する`() {
 //		setup
-		deleteAllItems("test")
+        deleteAllItems("test")
 		val postedItemPK = mockMvc.perform(
 			post("/todo")
 				.content("{\"text\": \"beforeです\"}")
