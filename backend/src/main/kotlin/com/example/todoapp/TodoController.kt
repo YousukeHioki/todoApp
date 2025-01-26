@@ -108,6 +108,7 @@ private val client = DynamoDbClient.builder()
 
     //⭐️PUT METHOD-------------------------
 
+    //特定の列の値のみしか
     @PutMapping("/todo/{PK}")
     fun updateItem(@PathVariable PK: String, @RequestBody todo: TodoRequest): ResponseEntity<String>{
         val beforeItem = getTodoItemByPK(PK)
@@ -121,7 +122,12 @@ private val client = DynamoDbClient.builder()
                 "text" to AttributeValueUpdate.builder()
                     .value(AttributeValue.builder().s(todo.text).build())
                     .action(AttributeAction.PUT)
-                    .build()
+                    .build(),
+                //複数列ある場合は上記のコードを追加する
+//                "他の列名" to AttributeValueUpdate.builder()
+//                    .value(AttributeValue.builder().s(todo.他の列名).build())
+//                    .action(AttributeAction.PUT)
+//                    .build()
             ))
             .build()
         client.updateItem(updateItemRequest)

@@ -9,20 +9,22 @@ export function TodoApp() {
             await getAllTodoItems();
         })();
     }, []);
+
+    //確認用
+    useEffect(() => {
+        console.log("allTodoItems-----状態保持:", allTodoItems);
+    }, [allTodoItems]);
+
     //全てのTodoItemsを取得する関数
     async function getAllTodoItems() {
         const fetchResponse: Response = await fetch(VITE_API_URL + "/todo");
-        console.log("fetchResponse", fetchResponse); //OK
-
         if (fetchResponse.ok) {
             const jsonResponse = await fetchResponse.json();
             setAllTodoItems(jsonResponse);
             console.log("allTodoItems-----fetch時:", jsonResponse);
-            console.log("allTodoItems-----状態保持:", allTodoItems);
         } else {
             console.log("NG status code-----", fetchResponse.status);
         }
-        console.log("最後まできた");
     }
 
     return (
