@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-const VITE_API_URL = import.meta.env.VITE_API_URL;
+// const VITE_API_URL = import.meta.env.VITE_API_URL;
+
+import axios from "axios";
 
 interface TodoItem {
     pk: string;
@@ -8,32 +10,39 @@ interface TodoItem {
 
 export function TodoApp() {
     const [allTodoItems, setAllTodoItems] = useState<TodoItem[]>([]);
+    const [text, setText] = useState<string>("");
     //全てのTodoItemsをページを開いた時に取得する
-    useEffect(() => {
-        (async () => {
-            await getAllTodoItems();
-        })();
-    }, []);
+    // useEffect(() => {
+    //     (async () => {
+    //         await getAllTodoItems();
+    //     })();
+    // }, []);
     //allTodoItemsに状態保持していることの確認用
+    // useEffect(() => {
+    //     console.log("allTodoItems-----状態保持:", allTodoItems);
+    // }, [allTodoItems]);
     useEffect(() => {
-        console.log("allTodoItems-----状態保持:", allTodoItems);
-    }, [allTodoItems]);
+        axios.get("/todo").then((response) => {
+            setAllTodoItems(response.data);
+        });
+    }, []);
 
     //全てのTodoItemsを取得する関数
-    async function getAllTodoItems() {
-        const fetchResponse: Response = await fetch(VITE_API_URL + "/todo");
-        if (fetchResponse.ok) {
-            const jsonResponse = await fetchResponse.json();
-            setAllTodoItems(jsonResponse);
-            console.log("allTodoItems-----fetch時:", jsonResponse);
-        } else {
-            console.log("NG status code-----", fetchResponse.status);
-        }
-    }
+    // async function getAllTodoItems() {
+    //     const fetchResponse: Response = await fetch(VITE_API_URL + "/todo");
+    //     if (fetchResponse.ok) {
+    //         const jsonResponse = await fetchResponse.json();
+    //         setAllTodoItems(jsonResponse);
+    //         console.log("allTodoItems-----fetch時:", jsonResponse);
+    //     } else {
+    //         console.log("NG status code-----", fetchResponse.status);
+    //     }
+    // }
 
     return (
         <>
             <h1>MAIN PAGE</h1>
+
             {allTodoItems.map((todoItem, index) => {
                 return (
                     <>
@@ -41,10 +50,31 @@ export function TodoApp() {
                             <h2>{index + 1}番目のデータ</h2>
                             <div>PK: {todoItem.pk}</div>
                             <div>text: {todoItem.text}</div>
+                            <div>{todoItem.text}</div>
                         </div>
                     </>
                 );
             })}
+            <div>
+                <input
+                    type="text"
+                    value={text}
+                    onChange={(e) => setText(e.target.value)}
+                />
+                <button
+                    onClick={() => {
+                        axios.post("/todo", { text: text }).then(() => {
+                            axios.get("/todo").then((response) => {
+                                console.log(response.data);
+                                setAllTodoItems(response.data);
+                            });
+                        });
+                        setText("");
+                    }}
+                >
+                    submit
+                </button>
+            </div>
         </>
     );
 }
