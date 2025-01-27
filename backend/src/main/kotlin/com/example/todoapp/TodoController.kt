@@ -110,7 +110,7 @@ private val client = DynamoDbClient.builder()
 
     //特定の列の値のみしか
     @PutMapping("/todo/{PK}")
-    fun updateItem(@PathVariable PK: String, @RequestBody todo: TodoRequest): ResponseEntity<String>{
+    fun updateTodoItem(@PathVariable PK: String, @RequestBody todo: TodoRequest): ResponseEntity<String>{
         val beforeItem = getTodoItemByPK(PK)
         val beforeText = beforeItem.body?.text
         println("beforeText=--------------$beforeText")
@@ -141,6 +141,18 @@ private val client = DynamoDbClient.builder()
             return ResponseEntity("Could not update.", HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
+
+//    💡カギさんコード
+//    fun updateTodoItem(updatedItem: TodoItem) {
+//        val todoKey = Key.builder()
+//            .partitionValue(updatedItem.id.toString())
+//            .build()
+//        if (todoItemDynamoDbTable.getItem(todoKey) != null) {
+//            todoItemDynamoDbTable.updateItem(updatedItem)
+//        } else {
+//            throw ResponseStatusException(HttpStatus.NOT_FOUND, "Not Found")
+//        }
+//    }
 
 
     //⭐️DELETE METHOD----------------------
