@@ -20,7 +20,7 @@ describe("TodoApp", () => {
 
     test("render TodoApp screen then see main page", () => {
         render(<TodoApp />);
-        expect(screen.getByText("MAIN PAGE")).not.toBeNull();
+        expect(screen.getByText("TODO-LIST")).not.toBeNull();
     });
 
     test("given getTodoItems has items when render TodoApp then see todo items", async () => {
