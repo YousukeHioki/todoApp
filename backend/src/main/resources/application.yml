@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: todoapp
+  mvc:
+    cors:
+      allowed-origins: http://localhost:5173
+      allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+
+aws:
+    dynamodb-url: http://localhost:4566
+    table-name: test

@@ -9,7 +9,7 @@ describe("TodoApp", () => {
     beforeEach(() => {
         vi.spyOn(axios, "get").mockResolvedValue({ data: [] });
     });
-
+    //テスト後にクリーンナップをする
     afterEach(() => {
         cleanup();
     });
