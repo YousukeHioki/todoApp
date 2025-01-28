@@ -1,0 +1,13 @@
+version: "3.8"
+services:
+  localstack:
+    image: localstack/localstack
+    ports:
+      - "127.0.0.1:4566:4566"
+      - "127.0.0.1:4510-4599:4510-4599"
+    environment:
+        - DYNAMODB_SHARE_DB=1
+    volumes:
+        - "./init:/etc/localstack/init/ready.d"
+        - "./volume:/var/lib/localstack"
+        - "${DOCKER_SOCK:-/var/run/docker.sock}:/var/run/docker.sock"

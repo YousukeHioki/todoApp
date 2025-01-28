@@ -58,7 +58,7 @@ class DefaultTodoRepository(
         val newPK = UUID.randomUUID().toString()
         client.putItem(
             PutItemRequest.builder()
-                .tableName("test")
+                .tableName(tableName)
                 .item(
                     mapOf(
                         "PK" to AttributeValue.fromS(newPK),
