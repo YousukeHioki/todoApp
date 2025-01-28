@@ -33,11 +33,16 @@ class DefaultTodoRepository(
     val client: DynamoDbClient
 
     init {
-        client = DynamoDbClient.builder()
-            .endpointOverride(URI.create(dynamoDbUrl))
-            .credentialsProvider(AnonymousCredentialsProvider.create())
+        println("dynamoDbUrl-------- $dynamoDbUrl")
+        val builder = DynamoDbClient.builder()
             .region(Region.AP_NORTHEAST_1)
-            .build()
+
+        if(dynamoDbUrl != "default"){
+            builder.endpointOverride(URI.create(dynamoDbUrl))
+                .credentialsProvider(AnonymousCredentialsProvider.create())
+        }
+
+        client = builder.build()
     }
 
     override fun getAllItems(): List<TodoItem> {
