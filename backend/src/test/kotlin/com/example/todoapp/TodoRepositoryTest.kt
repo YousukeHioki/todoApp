@@ -7,7 +7,8 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito
-import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue.fromS
@@ -46,7 +47,7 @@ class TodoRepositoryTest {
         var url = "http://localhost:4566"
         client = DynamoDbClient.builder()
             .endpointOverride(URI.create(url))
-            .credentialsProvider(AnonymousCredentialsProvider.create())
+            .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("aaa", "aaa")))
             .region(Region.AP_NORTHEAST_1)
             .build()
         todoRepository = DefaultTodoRepository(

@@ -73,6 +73,8 @@ export function TodoApp() {
         });
     }
 
+    //TODO:Doneボタンでの完了フラグ処理関数作成
+
     return (
         <>
             <h1>TODO-LIST</h1>
@@ -124,6 +126,7 @@ export function TodoApp() {
                                         >
                                             Edit
                                         </button>
+                                        {/*TODO:Doneボタンでの完了フラグ処理関数作成*/}
                                         <button>Done</button>
                                     </>
                                 ) : (
@@ -155,8 +158,8 @@ export function TodoApp() {
                     onChange={(e) => setText(e.target.value)}
                 />
                 <button
-                    onClick={async () => {
-                        await addNewTodoItem();
+                    onClick={() => {
+                        addNewTodoItem();
                     }}
                 >
                     submit

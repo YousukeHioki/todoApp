@@ -13,6 +13,8 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.DeleteItemRequest
@@ -32,6 +34,8 @@ class TodoappApplicationTests {
 	//DB接続
 	private val client = DynamoDbClient.builder()
 		.endpointOverride(URI.create("http://localhost:4566"))
+        .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("aaa", "aaa")))
+        //下のAnonymousはRegionが適用されないため使わない
 		.credentialsProvider(AnonymousCredentialsProvider.create())
 		.region(Region.AP_NORTHEAST_1)
 		.build()

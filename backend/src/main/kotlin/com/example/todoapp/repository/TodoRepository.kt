@@ -8,6 +8,8 @@ import org.springframework.stereotype.Repository
 import org.springframework.web.bind.annotation.*
 import org.springframework.beans.factory.annotation.Value
 import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.*
@@ -75,7 +77,18 @@ class DefaultTodoRepository(
     }
 
     override fun getTodoItemByPK(PK: String): ResponseEntity<TodoItem> {
-        TODO("Not yet implemented")
+        val items = client.scan(
+            ScanRequest.builder()
+                .tableName(tableName)
+                .build()
+        ).items()
+        val filteredItem = items.filter { it["PK"]?.s() == PK }[0]
+        println("filtered---------- $filteredItem")
+        return if (filteredItem.isNotEmpty()) {
+            ResponseEntity.ok(TodoItem(filteredItem["PK"]!!.s(), filteredItem["text"]!!.s()))
+        } else {
+            ResponseEntity.notFound().build()
+        }
     }
 
     override fun updateTodoItem(PK: String, todo: TodoRequest): ResponseEntity<String> {
@@ -92,7 +105,7 @@ class TodoRepositoryImpl {
 
     private val client = DynamoDbClient.builder()
         .endpointOverride(URI.create("http://localhost:4566")) //テスト時などに特定のEPを指定する
-        .credentialsProvider(AnonymousCredentialsProvider.create()) // 匿名認証のため必要
+        .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("aaa", "aaa")))
         .region(Region.AP_NORTHEAST_1) //利用位置から近い地域を設定
         .build()
 
