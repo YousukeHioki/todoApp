@@ -7,5 +7,5 @@ spring:
       allowed-methods: GET,POST,PUT,DELETE,OPTIONS
 
 aws:
-    dynamodb-url: ${AWS_DYNAMODB_URL:default}
-    table-name: ${AWS_DYNAMODB_URL:LocalTodoTable}
+  dynamodb-url: ${AWS_DYNAMODB_URL:default}
+  table-name: ${AWS_DYNAMODB_TABLE_NAME:LocalTodoTable}
