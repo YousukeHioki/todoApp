@@ -1,170 +1,179 @@
 import { useEffect, useState } from "react";
-const VITE_API_URL = import.meta.env.VITE_API_URL;
-
 import axios from "axios";
 
 interface TodoItem {
-    pk: string;
-    text: string;
+  pk: string;
+  text: string;
 }
 
 export function TodoApp() {
-    const [allTodoItems, setAllTodoItems] = useState<TodoItem[]>([]);
-    const [pk, setPk] = useState<string>("");
-    const [text, setText] = useState<string>("");
-    const [isReadOnly, setIsReadOnly] = useState<boolean>(true);
-    //全てのTodoItemsをページを開いた時に取得する
-    useEffect(() => {
-        (async () => {
-            await getAllTodoItems();
-        })();
-    }, []);
-    //allTodoItemsに状態保持していることの確認用
-    useEffect(() => {
-        console.log("allTodoItems-----状態保持:", allTodoItems);
-    }, [allTodoItems]);
-    useEffect(() => {
-        axios.get("/todo").then((response) => {
-            setAllTodoItems(response.data);
-        });
-    }, []);
+  const [allTodoItems, setAllTodoItems] = useState<TodoItem[]>([]);
+  const [pk, setPk] = useState<string>("");
+  const [text, setText] = useState<string>("");
+  const [isEditMode, setIsEditMode] = useState<boolean>(false);
 
-    //全てのTodoItemsを取得する関数
-    async function getAllTodoItems() {
-        const fetchResponse: Response = await fetch(VITE_API_URL + "/todo");
-        if (fetchResponse.ok) {
-            const jsonResponse = await fetchResponse.json();
-            setAllTodoItems(jsonResponse);
-            console.log("allTodoItems-----fetch時:", jsonResponse);
-        } else {
-            console.log("NG status code-----", fetchResponse.status);
-        }
-    }
-    //新しいTodoItemを登録
-    function addNewTodoItem() {
-        axios.post("/todo", { text: text }).then(() => {
-            axios.get("/todo").then((response) => {
-                console.log("response.data-----", response.data);
-                setAllTodoItems(response.data);
-            });
-        });
+  //本番用
+  //全てのTodoItemsをページを開いた時に取得する
+  // useEffect(() => {
+  //   (async () => {
+  //     await getAllTodoItems();
+  //   })();
+  // }, []);
+  //allTodoItemsに状態保持していることの確認用
+  useEffect(() => {
+    console.log("allTodoItems----------", allTodoItems);
+  }, [allTodoItems]);
+  useEffect(() => {
+    getAllTodoItems();
+  }, []);
+
+  //全てのTodoItemsを取得する関数
+  function getAllTodoItems() {
+    axios.get("/todo").then((response) => {
+      setAllTodoItems(response.data);
+    });
+  }
+  //新しいTodoItemを登録
+  function addNewTodoItem() {
+    axios.post("/todo", { text: text }).then(() => {
+      axios.get("/todo").then((response) => {
+        console.log("response.data-----", response.data);
+        setAllTodoItems(response.data);
+      });
+    });
+    setText("");
+  }
+  //編集モードに変更
+  function changeToEditMode(selectedPk: string, selectedText: string) {
+    setIsEditMode(true);
+    setPk(selectedPk);
+    setText(selectedText);
+  }
+  //TodoItemを更新
+  function updateTodoItem(selectedPk: string) {
+    axios
+      .put(`/todo/${selectedPk}`, { text: text })
+      .then((response) => {
+        console.log("response------", response.data);
+        //TODO:textに完了の文字列が入るか確認
+        console.log("text------", response.data.text);
         setText("");
-    }
-    //編集モードに変更
-    function changeToEditMode(selectedPk: string, selectedText: string) {
-        setIsReadOnly(false);
-        setPk(selectedPk);
-        setText(selectedText);
-    }
-    //TodoItemを編集
-    function editTodoItem(selectedPk: string) {
-        axios.put(`/todo/${selectedPk}`, { text: text }).then((response) => {
-            console.log("response.data-----", response.data);
-            //TODO:textに完了の文字列が入るか確認
-            // alert(response.data.text)
-        });
-    }
-    //TodoItemを削除
-    function deleteTodoItem(selectedPk: string) {
-        axios.delete(`/todo/${selectedPk}`).then((response) => {
-            console.log("response.data-----", response.data);
-            //TODO:textに完了の文字列が入るか確認
-            // alert(response.data.text)
-        });
-    }
+        setIsEditMode(false);
+      })
+      .catch((error) => {
+        console.error("Update error:", error);
+      });
+  }
+  //TodoItemを削除
+  function deleteTodoItem(selectedPk: string) {
+    axios.delete(`/todo/${selectedPk}`).then((response) => {
+      console.log("response.data-----", response.data);
+      //TODO:textに完了の文字列が入るか確認
+      // alert(response.data.text)
+    });
+  }
 
-    //TODO:Doneボタンでの完了フラグ処理関数作成
+  //TODO:Doneボタンでの完了フラグ処理関数作成
 
-    return (
+  return (
+    <>
+      <h1>TODO-LIST</h1>
+      {!isEditMode ? (
         <>
-            <h1>TODO-LIST</h1>
-
-            {allTodoItems.map((todoItem, index) => {
-                return (
-                    <>
-                        <div
-                            key={index}
-                            id="card"
-                            style={{
-                                backgroundColor: "lightcyan",
-                                border: "2px solid lightgray",
-                                borderRadius: "10px",
-                                padding: "10px 20px",
-                                margin: "10px",
-                            }}
-                        >
-                            <h2>{index + 1}番目のデータ</h2>
-                            <input value={todoItem.pk} />
-                            <input
-                                style={{
-                                    fontSize: "large",
-                                }}
-                                value={todoItem.text}
-                                readOnly={isReadOnly}
-                                onChange={(e) => {
-                                    setText(e.target.value);
-                                }}
-                            />
-                            <div>
-                                {isReadOnly ? (
-                                    // 読み取り専用モードの時のボタン[削除・編集・完了]
-                                    <>
-                                        <button
-                                            onClick={() => {
-                                                deleteTodoItem(todoItem.pk);
-                                            }}
-                                        >
-                                            Delete
-                                        </button>
-                                        <button
-                                            onClick={() =>
-                                                changeToEditMode(
-                                                    todoItem.pk,
-                                                    todoItem.text,
-                                                )
-                                            }
-                                        >
-                                            Edit
-                                        </button>
-                                        {/*TODO:Doneボタンでの完了フラグ処理関数作成*/}
-                                        <button>Done</button>
-                                    </>
-                                ) : (
-                                    // 編集モードの時のボタン[キャンセル・登録]
-                                    <>
-                                        <button
-                                            onClick={() => setIsReadOnly(true)}
-                                        >
-                                            Cancel
-                                        </button>
-                                        <button
-                                            onClick={() => {
-                                                editTodoItem(pk);
-                                            }}
-                                        >
-                                            Submit
-                                        </button>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                    </>
-                );
-            })}
-            <div>
-                <input
-                    type="text"
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
-                />
-                <button
-                    onClick={() => {
-                        addNewTodoItem();
-                    }}
+          {allTodoItems.map((todoItem, index) => {
+            return (
+              <>
+                <div
+                  key={index}
+                  style={{
+                    backgroundColor: "lightcyan",
+                    border: "2px solid lightgray",
+                    borderRadius: "10px",
+                    padding: "10px 20px",
+                    margin: "10px",
+                  }}
                 >
-                    submit
-                </button>
-            </div>
+                  <h2>{index + 1}番目のデータ</h2>
+                  <div>PK:{todoItem.pk}</div>
+                  <div>{todoItem.text}</div>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-evenly",
+                    }}
+                  >
+                    {/*ボタンエリア*/}
+                    <button
+                      onClick={() => {
+                        deleteTodoItem(todoItem.pk);
+                      }}
+                    >
+                      Delete
+                    </button>
+                    <button
+                      onClick={() =>
+                        changeToEditMode(todoItem.pk, todoItem.text)
+                      }
+                    >
+                      Edit
+                    </button>
+                    {/*TODO:Doneボタンでの完了フラグ処理関数作成*/}
+                    <button>Done</button>
+                  </div>
+                </div>
+              </>
+            );
+          })}
+          {/*テキストエリア・登録ボタン*/}
+          <div>
+            <input
+              type="text"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+            />
+            <button
+              onClick={() => {
+                addNewTodoItem();
+              }}
+            >
+              submit
+            </button>
+          </div>
         </>
-    );
+      ) : (
+        // 編集モードの時の選択したcard単体表示
+        <div
+          style={{
+            backgroundColor: "lightgreen",
+            border: "2px solid lightgray",
+            borderRadius: "10px",
+            padding: "10px 20px",
+            margin: "10px",
+          }}
+        >
+          <div>{pk}</div>
+          <input
+            type="text"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+          />
+          <button
+            onClick={() => {
+              setText("");
+              setIsEditMode(false);
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => {
+              updateTodoItem(pk);
+            }}
+          >
+            Submit
+          </button>
+        </div>
+      )}
+    </>
+  );
 }
