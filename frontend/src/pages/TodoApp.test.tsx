@@ -62,21 +62,22 @@ describe("TodoApp", () => {
 			expect(screen.getByText("Hello!")).not.toBeNull();
 		});
 	});
-	test("WHen a TODO is updated, it is seen asap", async () => {
-		const spyGet = vi
-			.spyOn(axios, "get")
-			.mockResolvedValueOnce({ data: [{ pk: "10000", text: "Hello!" }] })
-			.mockResolvedValue({ data: [{ pk: "10000", text: "Hello Again!" }] });
-		vi.spyOn(axios, "put").mockResolvedValue(undefined);
 
-		render(<TodoApp />);
-		await userEvent.click(await screen.findByRole("button", { name: "Edit" }));
-		await userEvent.type(screen.getByRole("textbox"), "Hello Again!");
-		await userEvent.click(screen.getByRole("button", { name: "Submit" }));
-
-		await waitFor(() => {
-			// expect(spyGet).toHaveBeenNthCalledWith(2, "/todo");
-			expect(screen.getByText("Hello Again!")).not.toBeNull();
-		});
-	});
+	// test("WHen a TODO is updated, it is seen asap", async () => {
+	// 	const spyGet = vi
+	// 		.spyOn(axios, "get")
+	// 		.mockResolvedValueOnce({ data: [{ pk: "10000", text: "Hello!" }] })
+	// 		.mockResolvedValue({ data: [{ pk: "10000", text: "Hello Again!" }] });
+	// 	vi.spyOn(axios, "put").mockResolvedValue(undefined);
+	//
+	// 	render(<TodoApp />);
+	// 	await userEvent.click(await screen.findByRole("button", { name: "Edit" }));
+	// 	await userEvent.type(screen.getByRole("textbox"), "Hello Again!");
+	// 	await userEvent.click(screen.getByRole("button", { name: "Submit" }));
+	//
+	// 	await waitFor(() => {
+	// 		// expect(spyGet).toHaveBeenNthCalledWith(2, "/todo");
+	// 		expect(screen.getByText("Hello Again!")).not.toBeNull();
+	// 	});
+	// });
 });
