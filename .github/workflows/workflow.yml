@@ -77,6 +77,11 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      - name: build gradle
+        run: |
+          cd backend
+          ./gradlew build -x test
+
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
         env:
