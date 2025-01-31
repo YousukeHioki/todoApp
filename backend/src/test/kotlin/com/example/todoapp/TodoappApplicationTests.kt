@@ -6,6 +6,7 @@ import org.hamcrest.CoreMatchers.not
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
@@ -31,6 +32,8 @@ class TodoappApplicationTests {
 	@Autowired
 	private lateinit var mockMvc: MockMvc
 
+  @Value("\${aws.table-name}") private lateinit var tableName: String
+
 	//DB接続
 	private val client = DynamoDbClient.builder()
 		.endpointOverride(URI.create("http://localhost:4566"))
@@ -40,7 +43,7 @@ class TodoappApplicationTests {
 		.region(Region.AP_NORTHEAST_1)
 		.build()
 	//全アイテム削除
-	fun deleteAllItems(tableName: String){
+	fun deleteAllItems(){
 		val request = ScanRequest.builder()
 			.tableName(tableName)
 			.build()
@@ -59,27 +62,31 @@ class TodoappApplicationTests {
 	//全アイテム取得
 	fun scanAllItems(tableName: String): List<Map<String, AttributeValue>>{
 		val request = ScanRequest.builder()
-			.tableName("test")
+			.tableName(tableName)
 			.build()
 		val response = client.scan(request)
 		val items = response.items().toList()
 		return items
 	}
 
+  @Test
+  fun `deleteAllItemsは良いです`(){
+    println( client.listTables())
+  }
 
-	//⭐️GET METHOD------------------------
+
 
 	@Test
 	fun `全てのテーブルデータを GET する`(){
 		//Setup
-		deleteAllItems("test")
+		deleteAllItems()
 
 		val item = mapOf(
 			"PK" to AttributeValue.fromS(UUID.randomUUID().toString()),
 			"text" to AttributeValue.fromS("12345")
 		)
 		val putItemRequest = PutItemRequest.builder()
-			.tableName("test")
+			.tableName(tableName)
 			.item(item)
 			.build()
 		client.putItem(putItemRequest)
@@ -93,7 +100,7 @@ class TodoappApplicationTests {
 	@Test
 	fun `特定のPKのデータのみを GET する`(){
 		//Setup
-		deleteAllItems("test")
+		deleteAllItems()
 
 		//Action
 		val PK1 = mockMvc.perform(post("/todo").content("{\"text\":\"１番目\"}")
@@ -118,9 +125,9 @@ class TodoappApplicationTests {
 
 	@Test
 	fun `PKが存在しない時に NOT FOUND を返す`(){
-		deleteAllItems("test")
+		deleteAllItems()
 
-		mockMvc.perform(get("/todo/1234567890"))
+		mockMvc.perform(get("/todo/${UUID.randomUUID()}"))
 		.andExpect(status().isNotFound)
 	}
 
@@ -139,7 +146,7 @@ class TodoappApplicationTests {
 	fun `todoエンドポイントに foo をPOSTするとテーブルに foo が追加される`() {
 		// Setup
 		//以下のコードでDBテストする場合はbuild.gradle.ktsにimplementationする必要あり
-		deleteAllItems("test")
+		deleteAllItems()
 
 		// Action
 		mockMvc.perform(post("/todo").content("{\"text\":\"bar\"}")
@@ -148,7 +155,7 @@ class TodoappApplicationTests {
 
 		// Check
 		val request = ScanRequest.builder()
-			.tableName("test")
+			.tableName(tableName)
 			.build()
 		val afterResponse = client.scan(request)
 		val afterItems = afterResponse.items().toList()
@@ -159,7 +166,7 @@ class TodoappApplicationTests {
 	fun `todoエンドポイントに bar をPOSTするとテーブルに bar が追加される`() {
 		// Setup
 		//以下のコードでDBテストする場合はbuild.gradle.ktsにimplementationする必要あり
-		deleteAllItems("test")
+		deleteAllItems()
 
 		// Action
 		mockMvc.perform(post("/todo").content("{\"text\":\"bar\"}")
@@ -167,7 +174,7 @@ class TodoappApplicationTests {
 		)
 		// Check
 		val request = ScanRequest.builder()
-			.tableName("test")
+			.tableName(tableName)
 			.build()
 		val afterResponse = client.scan(request)
 		val afterItems = afterResponse.items().toList()
@@ -177,7 +184,7 @@ class TodoappApplicationTests {
 	@Test
 	fun `二つPOSTしたときに それぞれ違うIDで登録されている`(){
 		//Setup
-		deleteAllItems("test")
+		deleteAllItems()
 
 		// Action
 		mockMvc.perform(post("/todo").content("{\"text\":\"bar\"}")
@@ -187,14 +194,14 @@ class TodoappApplicationTests {
 			.contentType(MediaType.APPLICATION_JSON)
 		)
 		//Check
-		val allItems = scanAllItems("test")
+		val allItems = scanAllItems(tableName)
 		assertThat(allItems.size, equalTo(2))
 	}
 
 	@Test
 	fun `新しいtodoアイテムを POST したときに 登録したID を返す`() {
 		//Setup
-		deleteAllItems("test")
+		deleteAllItems()
 
 		// Action
 		val result = mockMvc.perform(
@@ -217,7 +224,7 @@ class TodoappApplicationTests {
 	@Test
 	fun `特定のPKのデータを UPDATE する`() {
 //		setup
-        deleteAllItems("test")
+        deleteAllItems()
 		val postedItemPK = mockMvc.perform(
 			post("/todo")
 				.content("{\"text\": \"beforeです\"}")
@@ -247,7 +254,7 @@ class TodoappApplicationTests {
 	@Test
 	fun `特定のPKのデータを DELETE する`(){
 //		setup
-		deleteAllItems("test")
+		deleteAllItems()
 		val id1 = mockMvc.perform(post("/todo")
 			.content("{\"text\": \"１番目\"}")
 			.contentType(MediaType.APPLICATION_JSON)

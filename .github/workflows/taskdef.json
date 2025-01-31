@@ -1,0 +1,99 @@
+{
+	"taskDefinitionArn": "arn:aws:ecs:ap-northeast-1:157094121738:task-definition/suke-todoapp-task:5",
+	"containerDefinitions": [
+		{
+			"name": "suke-todoapp-container",
+			"image": "157094121738.dkr.ecr.ap-northeast-1.amazonaws.com/suke/todoapp:latest",
+			"cpu": 0,
+			"portMappings": [
+				{
+					"name": "8080",
+					"containerPort": 8080,
+					"hostPort": 8080,
+					"protocol": "tcp",
+					"appProtocol": "http"
+				}
+			],
+			"essential": true,
+			"environment": [
+				{
+					"name": "AWS_DYNAMODB_TABLE_NAME",
+					"value": "suke-todo-table"
+				}
+			],
+			"environmentFiles": [],
+			"mountPoints": [],
+			"volumesFrom": [],
+			"ulimits": [],
+			"logConfiguration": {
+				"logDriver": "awslogs",
+				"options": {
+					"awslogs-group": "/ecs/suke-todoapp-task",
+					"mode": "non-blocking",
+					"awslogs-create-group": "true",
+					"max-buffer-size": "25m",
+					"awslogs-region": "ap-northeast-1",
+					"awslogs-stream-prefix": "ecs"
+				},
+				"secretOptions": []
+			},
+			"systemControls": []
+		}
+	],
+	"family": "suke-todoapp-task",
+	"taskRoleArn": "arn:aws:iam::157094121738:role/ecs-task-dynamodb-role",
+	"executionRoleArn": "arn:aws:iam::157094121738:role/ecsTaskExecutionRole",
+	"networkMode": "awsvpc",
+	"revision": 5,
+	"volumes": [],
+	"status": "ACTIVE",
+	"requiresAttributes": [
+		{
+			"name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
+		},
+		{
+			"name": "ecs.capability.execution-role-awslogs"
+		},
+		{
+			"name": "com.amazonaws.ecs.capability.ecr-auth"
+		},
+		{
+			"name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
+		},
+		{
+			"name": "com.amazonaws.ecs.capability.docker-remote-api.1.28"
+		},
+		{
+			"name": "com.amazonaws.ecs.capability.task-iam-role"
+		},
+		{
+			"name": "ecs.capability.execution-role-ecr-pull"
+		},
+		{
+			"name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
+		},
+		{
+			"name": "ecs.capability.task-eni"
+		},
+		{
+			"name": "com.amazonaws.ecs.capability.docker-remote-api.1.29"
+		}
+	],
+	"placementConstraints": [],
+	"compatibilities": [
+		"EC2",
+		"FARGATE"
+	],
+	"requiresCompatibilities": [
+		"FARGATE"
+	],
+	"cpu": "1024",
+	"memory": "3072",
+	"runtimePlatform": {
+		"cpuArchitecture": "ARM64",
+		"operatingSystemFamily": "LINUX"
+	},
+	"registeredAt": "2025-01-29T04:58:58.474Z",
+	"registeredBy": "arn:aws:sts::157094121738:assumed-role/AWSReservedSSO_DeveloperAccessExt_f880bc79acf59821/yousuke_hioki",
+	"tags": []
+}

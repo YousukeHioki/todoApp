@@ -80,7 +80,7 @@ class TodoControllerTest {
     val updateTodo = TodoRequest("Hi!")
 
     Mockito.`when`(mockTodoRepository.updateTodoItem("1234567890", updateTodo))
-      .thenReturn("1234567890", "Hi")
+      .thenReturn(TodoItem("1234567890", "Hi"))
 
     mockMvc.perform(
       put("/todo/1234567890").contentType("application/json")

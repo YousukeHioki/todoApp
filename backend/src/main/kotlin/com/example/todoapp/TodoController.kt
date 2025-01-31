@@ -4,6 +4,7 @@ import com.example.todoapp.repository.TodoRepository
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.server.ResponseStatusException
 
 data class TodoRequest(
   var text: String = ""
@@ -26,7 +27,9 @@ class TodoController(val todoRepository: TodoRepository) {
 
   @GetMapping("/todo/{PK}")
   fun getTodoItemByPK(@PathVariable PK: String): ResponseEntity<TodoItem?> {
-    return ResponseEntity.ok(todoRepository.getTodoItemByPK(PK))
+    val todoOrNull = todoRepository.getTodoItemByPK(PK)
+    return if (todoOrNull!= null) ResponseEntity.ok(todoOrNull)
+           else throw ResponseStatusException(HttpStatus.NOT_FOUND)
   }
 
 

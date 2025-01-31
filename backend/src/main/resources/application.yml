@@ -8,4 +8,4 @@ spring:
 
 aws:
   dynamodb-url: ${AWS_DYNAMODB_URL:default}
-  table-name: ${AWS_DYNAMODB_TABLE_NAME:LocalTodoTable}
+  table-name: ${AWS_DYNAMODB_TABLE_NAME:suke-todo-teble}
