@@ -12,6 +12,7 @@ import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue.fromS
 import software.amazon.awssdk.services.dynamodb.model.DeleteItemRequest
 import software.amazon.awssdk.services.dynamodb.model.GetItemRequest
@@ -80,7 +81,8 @@ class TodoRepositoryTest {
         .item(
           mapOf(
             "PK" to fromS(uuid),
-            "text" to fromS("Hello!")
+            "text" to fromS("Hello!"),
+            "completed" to AttributeValue.builder().bool(false).build()
           )
         )
         .build()
@@ -93,6 +95,7 @@ class TodoRepositoryTest {
         TodoItem(
           uuid,
           "Hello!",
+          false
         )
       ),
       result
@@ -108,7 +111,8 @@ class TodoRepositoryTest {
         .item(
           mapOf(
             "PK" to fromS(uuid),
-            "text" to fromS("Hello!")
+            "text" to fromS("Hello!"),
+            "completed" to AttributeValue.builder().bool(false).build()
           )
         )
         .build()
@@ -119,6 +123,7 @@ class TodoRepositoryTest {
       TodoItem(
         uuid,
         "Hello!",
+        false
       ),
       result
     )
@@ -158,7 +163,8 @@ class TodoRepositoryTest {
     assertEquals(
       mapOf(
         "PK" to fromS(resultPK),
-        "text" to fromS("Hello!")
+        "text" to fromS("Hello!"),
+        "completed" to AttributeValue.builder().bool(false).build()
       ),
       resultResponse.item()
     )
@@ -243,6 +249,43 @@ class TodoRepositoryTest {
       assertEquals(deleteItemResponse, false)
     }
 
+  }
+
+  @Test
+  fun `完了ステータスをfalseからtrueにトグルできる`() {
+    val PK = todoRepository.addNewItem(TodoRequest("Test task"))
+    
+    val initialItem = todoRepository.getTodoItemByPK(PK)
+    assertEquals(false, initialItem?.completed)
+    
+    val updatedItem = todoRepository.toggleCompletion(PK, true)
+    
+    assertNotNull(updatedItem)
+    assertEquals(true, updatedItem?.completed)
+    assertEquals("Test task", updatedItem?.text)
+  }
+
+  @Test
+  fun `完了ステータスをtrueからfalseにトグルできる`() {
+    val PK = todoRepository.addNewItem(TodoRequest("Test task"))
+    
+    // First toggle to true
+    todoRepository.toggleCompletion(PK, true)
+    val itemAfterFirstToggle = todoRepository.getTodoItemByPK(PK)
+    assertEquals(true, itemAfterFirstToggle?.completed)
+    
+    // Toggle back to false
+    val updatedItem = todoRepository.toggleCompletion(PK, false)
+    
+    assertNotNull(updatedItem)
+    assertEquals(false, updatedItem?.completed)
+  }
+
+  @Test
+  fun `存在しないPKで完了ステータスをトグルしようとするとnullを返す`() {
+    val result = todoRepository.toggleCompletion("nonexistent-pk", true)
+    
+    assertNull(result)
   }
 
 }
