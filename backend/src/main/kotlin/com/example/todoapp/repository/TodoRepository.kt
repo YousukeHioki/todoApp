@@ -156,7 +156,7 @@ class DefaultTodoRepository(
                 .build()
         )
         
-        return getTodoItemByPK(PK)
+        return TodoItem(PK, item.text, completed)
     }
 
     override fun deleteItemByPK(PK: String): Boolean {
