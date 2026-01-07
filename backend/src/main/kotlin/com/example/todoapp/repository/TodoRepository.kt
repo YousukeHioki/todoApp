@@ -21,6 +21,7 @@ interface TodoRepository {
     fun getTodoItemByPK(PK: String): TodoItem?
     fun addNewItem(todoRequest: TodoRequest): String
     fun updateTodoItem(PK: String, todo: TodoRequest): TodoItem?
+    fun toggleCompletion(PK: String, completed: Boolean): TodoItem?
     fun deleteItemByPK(PK: String): Boolean
 }
 
@@ -56,6 +57,7 @@ class DefaultTodoRepository(
             TodoItem(
                 PK = it["PK"]!!.s(),
                 text = it["text"]!!.s(),
+                completed = it["completed"]?.bool() ?: false
             )
         }
     }
@@ -73,7 +75,11 @@ class DefaultTodoRepository(
         )
 
         return if (response.hasItem()) {
-            TodoItem(response.item()["PK"]!!.s(), response.item()["text"]!!.s())
+            TodoItem(
+                response.item()["PK"]!!.s(), 
+                response.item()["text"]!!.s(),
+                response.item()["completed"]?.bool() ?: false
+            )
         } else {
             return null
         }
@@ -83,7 +89,8 @@ class DefaultTodoRepository(
         val newPK = UUID.randomUUID().toString()
         val item = mapOf(
             "PK" to fromS(newPK),
-            "text" to fromS(todoRequest.text)
+            "text" to fromS(todoRequest.text),
+            "completed" to AttributeValue.builder().bool(false).build()
         )
 
         client.putItem(
@@ -97,11 +104,15 @@ class DefaultTodoRepository(
     }
 
     override fun updateTodoItem(PK: String, todo: TodoRequest): TodoItem? {
+        // Get current item to preserve completed status
+        val currentItem = getTodoItemByPK(PK) ?: return null
+        
         //追加したいアイテム
         val item = mapOf(
             //ランダムなUUIDをPKに入れる
             "PK" to fromS(PK),
-            "text" to fromS(todo.text)
+            "text" to fromS(todo.text),
+            "completed" to AttributeValue.builder().bool(currentItem.completed).build()
         )
         //アイテムを追加するリクエスト
         val putItemRequest = PutItemRequest.builder()
@@ -113,7 +124,7 @@ class DefaultTodoRepository(
 			val updatedItem = getTodoItemByPK(PK)
 
 			return if(updatedItem != null) {
-        TodoItem(updatedItem.PK, updatedItem.text)
+        TodoItem(updatedItem.PK, updatedItem.text, updatedItem.completed)
 			} else {
 				null
 			}
@@ -127,6 +138,25 @@ class DefaultTodoRepository(
 //        val items = response.items().toList()
 //        val PK = items[items.size - 1]["PK"]?.s() ?: ""
 //        return PK
+    }
+    
+    override fun toggleCompletion(PK: String, completed: Boolean): TodoItem? {
+        val item = getTodoItemByPK(PK) ?: return null
+        
+        val updatedItem = mapOf(
+            "PK" to fromS(PK),
+            "text" to fromS(item.text),
+            "completed" to AttributeValue.builder().bool(completed).build()
+        )
+        
+        client.putItem(
+            PutItemRequest.builder()
+                .tableName(tableName)
+                .item(updatedItem)
+                .build()
+        )
+        
+        return TodoItem(PK, item.text, completed)
     }
 
     override fun deleteItemByPK(PK: String): Boolean {

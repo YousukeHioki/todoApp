@@ -13,7 +13,8 @@ data class TodoRequest(
 
 data class TodoItem(
   var PK: String = "",
-  var text: String = ""
+  var text: String = "",
+  var completed: Boolean = false
 )
 
 
@@ -59,7 +60,19 @@ class TodoController(val todoRepository: TodoRepository) {
     @RequestBody todo: TodoRequest
   ): ResponseEntity<TodoItem> {
     val response = todoRepository.updateTodoItem(PK, todo)
-    val updatedItem = TodoItem(PK, todo.text);
+    val updatedItem = TodoItem(PK, todo.text, response?.completed ?: false);
+    return ResponseEntity.ok(updatedItem)
+  }
+
+  //⭐️PATCH METHOD for toggling completion status
+  @PatchMapping("/todo/{PK}/complete")
+  fun toggleTodoCompletion(@PathVariable PK: String): ResponseEntity<TodoItem> {
+    val currentItem = todoRepository.getTodoItemByPK(PK)
+      ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Todo item not found")
+    
+    val updatedItem = todoRepository.toggleCompletion(PK, !currentItem.completed)
+      ?: throw ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to update completion status")
+    
     return ResponseEntity.ok(updatedItem)
   }
 
